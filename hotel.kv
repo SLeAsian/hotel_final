@@ -11,19 +11,15 @@
 
 <Button>:
     font_name: 'fonts/ARIALUNI.TTF'
-    # font_name: '../fonts/ARIALUNI.TTF'
 
 <Label>:
     font_name: 'fonts/ARIALUNI.TTF'
-    # font_name: '../fonts/ARIALUNI.TTF'
 
 <TextInput>
     font_name: 'fonts/ARIALUNI.TTF'
-    # font_name: '../fonts/ARIALUNI.TTF'
 
 <Spinner>
     font_name: 'fonts/ARIALUNI.TTF'
-    # font_name: '../fonts/ARIALUNI.TTF'
 
 <LoginWindow>:
     name: 'screen_login'
@@ -152,8 +148,10 @@
                     on_press: root.finished_cleaning_room()
                 Button:
                     id: additional_hour_button
-                    text: '加休/加住'
+                    text: '加休/住、改資料'
                     disabled: True
+                    on_press: root.parent.current = 'screen_add_change'
+                    on_release:
                 Button:
                     id: shiftchange_button
                     text: '交班'
@@ -409,3 +407,110 @@
 
 <DatePicker>:
     pHint: .4, .4
+
+<AddChangeWindow>
+    name: 'screen_add_change'
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: 0.07
+            orientation: 'horizontal'
+
+            Label:
+                text: '房間'
+                size_hint_x: 0.05
+            TextInput:
+                id: add_change_room
+                text: ''
+                size_hint_x: 0.05
+            Label:
+                text: '姓名'
+                size_hint_x: 0.05
+            TextInput:
+                id: add_change_room_name
+                multiline: False
+                size_hint_x:0.2
+            Label:
+                text: '身分證'
+                size_hint_x: 0.05
+            TextInput:
+                id: add_change_room_id
+                multiline: False
+                size_hint_x:0.2
+            Label:
+                text: '出生日期'
+                size_hint_x: 0.1
+
+            TextInput:
+                id: add_change_room_dob
+                multiline: False
+                size_hint_x:0.1
+                hint_text: 'xx.xx.xxxx'
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.07
+            Label:
+                text: '電話'
+                size_hint_x: 0.1
+            TextInput:
+                id: add_change_room_phone_number
+                size_hint_x: 0.4
+            Label:
+                text: '信箱'
+                size_hint_x: 0.1
+            TextInput:
+                id: add_change_room_email
+                size_hint_x: 0.4
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.16
+            TextInput:
+                id: add_change_room_etc
+                hint_text: '備註'
+                size_hint_x: 0.6
+
+        BoxLayout:
+            size_hint_y: 0.2
+            orientation: 'horizontal'
+            Label:
+                text: '入住時間'
+            Label:
+                id: add_change_room_checkInDate
+                text: ''
+
+        BoxLayout:
+            size_hint_y: 0.1
+            orientation: 'horizontal'
+            Label:
+                text: '退房時間'
+            OneIntInput:
+                id: add_change_room_hour
+                font_name: 'fonts/ARIALUNI.TTF'
+                input_filter: 'int'
+                min_value : 1
+                max_value : 9
+                hint_text : '請輸入數字在於{}跟{}'.format(self.min_value, self.max_value)
+            Label:
+                id: add_change_room_checkOutDate
+                text: ''
+        BoxLayout:
+            size_hint_y: 0.2
+            Label:
+                text: '價格'
+            TextInput:
+                id: add_change_room_price
+                multiline: False
+
+        BoxLayout:
+            size_hint_y: 0.2
+            orientation: 'horizontal'
+            Button:
+                id: add_change_confirm
+                text: '確認'
+                # on_press: root.update_info()
+                on_release: root.parent.current = 'screen_primary'
+            Button:
+                id: add_change_decline
+                text: '取消'
+                on_press: root.wipe_input_boxes()
+                on_release: root.parent.current = 'screen_primary'
