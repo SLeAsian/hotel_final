@@ -1,18 +1,26 @@
 # : import Factory kivy.factory.Factory
 
-# MainWindow:
-#     LoginWindow:
-#     PrimaryWindow:
-#     OvernightWindow:
-#     RestWindow:
+<MainWindow>:
+    id_add_change:id_add_change
+    id_rest:id_rest
+    id_overnight:id_overnight
+    LoginWindow:
+    PrimaryWindow:
+    OvernightWindow:
+        id:id_overnight
+    RestWindow:
+        id:id_rest
+    AddChangeWindow:
+        id:id_add_change
 
-<FlatButton@ButtonBehavior+Label>:
-    font_size: 16
+
+<MDRaisedButton>:
+    font_name: 'fonts/ARIALUNI.TTF'
 
 <Button>:
     font_name: 'fonts/ARIALUNI.TTF'
 
-<Label>:
+<MDLabel>:
     font_name: 'fonts/ARIALUNI.TTF'
 
 <TextInput>
@@ -46,13 +54,10 @@
                 Rectangle:
                     size: self.size
                     pos:self.pos
-            Label:
+            MDLabel:
                 text: "旅館系統登入"
                 bold: True
                 size_hint_x: 0.9
-            FlatButton:
-                text: "x"
-                size_hint_x: 0.1
 
         BoxLayout:
             orientation: 'vertical'
@@ -65,7 +70,7 @@
                 size_hint_y: None
                 height: 100
 
-                Label:
+                MDLabel:
                     id: info
                     text: ''
                     markup: True
@@ -84,7 +89,7 @@
                     multiline: False
                     password: True
                     on_text_validate: root.validate_user()
-            Label: #empty label to remove empty space
+            MDLabel: #empty MDLabel to remove empty space
                 id: sp
                 size_hint_y:None
                 height: 10
@@ -93,9 +98,9 @@
                 size_hint_y: None
                 height: 40
                 background_color: (.06,.5,.5,1)
-                background_normal: '' #remove shades on button
+                background_normal: '' #remove shades on Button
                 on_release: root.validate_user()
-            Label: #empty label to remove empty space
+            MDLabel: #empty MDLabel to remove empty space
                 id: sp2
 
 <PrimaryWindow>
@@ -113,28 +118,30 @@
             BoxLayout:
                 orientation: 'vertical'
                 size_hint_x: 0.15
-                Label:
+                MDLabel:
                     text: '房間'
                 TextInput:
                     id: room_selected
                     hint_text: '在此輸入房間'
                     multiline: False
+                    input_filter: 'int'
                     # on_text_validate: root.validate_room()
                 Button:
                     id: rest_button
                     text: '休息'
                     disabled: True
-                    on_press: root.parent.current = 'screen_rest'
+                    on_press: root.rest_room_selected(root.manager)
+                    on_release: root.parent.current = 'screen_rest'
                 Button:
                     id: overnight_button
                     text: '住宿'
                     disabled: True
-                    on_press: root.parent.current = 'screen_overnight'
+                    on_press: root.overnight_room_selected(root.manager)
+                    on_release: root.parent.current = 'screen_overnight'
                 Button:
                     id: checkout_button
                     text: '退房'
                     disabled: True
-                    # on_press: Factory.AreYouSurePopup().open()
                     on_press: root.wipe_room_check()
                 Button:
                     id: cleaned_button
@@ -150,64 +157,47 @@
                     id: additional_hour_button
                     text: '加休/住、改資料'
                     disabled: True
-                    on_press: root.parent.current = 'screen_add_change'
-                    on_release:
+                    on_press: root.fill_data_to_add_change_screen(root.parent)
+                    on_release: root.parent.current = 'screen_add_change'
+
                 Button:
                     id: shiftchange_button
                     text: '交班'
                     on_press: root.shiftchange_check()
-                # Button:
-                #     id: daily_sheet_button
-                #     text: '日報表'
-                    # on_press: root.daily_sheet()
-        # BoxLayout:
-        #     orientation: 'horizontal'
-        #     size_hint_y: 0.05
-        #     Label:
-        #         size_hint_x: 0.1
-        #         text: '愈時'
-        #     Label:
-        #         id: room_near_checkout
-        #         size_hint_x: 0.4
-        #         text: ''
-        #     Label:
-        #         size_hint_x: 0.1
-        #         text: '超時'
-        #     Label:
-        #         id: room_past_checkout
-        #         size_hint_x: 0.4
-        #         text: ''
+                Button:
+                    id: daily_sheet_button
+                    text: '報表'
+                    on_press: root.get_report()
 
 <OvernightWindow>
     name: 'screen_overnight'
     BoxLayout:
         orientation: 'vertical'
         BoxLayout:
-            size_hint_y: 0.07
             orientation: 'horizontal'
 
-            Label:
+            MDLabel:
                 text: '房間'
                 size_hint_x: 0.05
-            Label:
+            MDLabel:
                 id: overnight_room
                 text: ''
                 size_hint_x: 0.05
-            Label:
+            MDLabel:
                 text: '姓名'
                 size_hint_x: 0.05
             TextInput:
                 id: overnight_room_name
                 multiline: False
                 size_hint_x:0.2
-            Label:
+            MDLabel:
                 text: '身分證'
                 size_hint_x: 0.05
             TextInput:
                 id: overnight_room_id
                 multiline: False
                 size_hint_x:0.2
-            Label:
+            MDLabel:
                 text: '出生日期'
                 size_hint_x: 0.1
 
@@ -218,14 +208,13 @@
                 hint_text: 'xx.xx.xxxx'
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.07
-            Label:
+            MDLabel:
                 text: '電話'
                 size_hint_x: 0.1
             TextInput:
                 id: overnight_room_phone_number
                 size_hint_x: 0.4
-            Label:
+            MDLabel:
                 text: '信箱'
                 size_hint_x: 0.1
             TextInput:
@@ -233,58 +222,64 @@
                 size_hint_x: 0.4
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.16
             TextInput:
                 id: overnight_room_etc
                 hint_text: '備註'
                 size_hint_x: 0.6
 
         BoxLayout:
-            size_hint_y: 0.15
             orientation: 'horizontal'
-            Label:
+            MDLabel:
                 text: '入住時間'
-            Label:
+            MDLabel:
                 id: overnight_room_checkInDate
                 text: ''
 
         BoxLayout:
-            size_hint_y: 0.15
             orientation: 'horizontal'
             Button:
-                on_press: root.show_calendar()
+                # on_press: root.show_calendar()
+                on_press: root.show_datepicker()
                 text: '點此選擇退房日期'
-            Label:
+            MDLabel:
                 id: overnight_room_checkOutDate
                 text: ''
+                # readonly: True
+                # on_text: root.checkTime_n_room(root.manager)
+
         BoxLayout:
-            size_hint_y: 0.1
             orientation: 'horizontal'
-            Label:
+            MDLabel:
+                text: '付款方式'
+            Spinner:
+                id: overnight_payment_option
+                values: ['信用卡','現金']
+                # on_text: root.overnight_spinner_clicked(overnight_payment_option.text)
+
+        BoxLayout:
+            orientation: 'horizontal'
+            MDLabel:
                 text: '入住天數'
-            Label:
+            MDLabel:
                 id: overnight_room_days
                 text: ''
         BoxLayout:
-            size_hint_y: 0.1
             orientation: 'horizontal'
-            Label:
+            MDLabel:
                 text: '每日價格'
             TextInput:
                 id: overnight_room_price
                 input_filter: 'int'
                 multiline: False
         BoxLayout:
-            size_hint_y: 0.1
             orientation: 'horizontal'
-            Label:
+            MDLabel:
                 text: '總額:'
-            Label:
+            MDLabel:
                 id: overnight_total
                 text: ''
 
         BoxLayout:
-            size_hint_y: 0.1
             orientation: 'horizontal'
             Button:
                 id: overnight_confirm
@@ -306,28 +301,28 @@
             size_hint_y: 0.07
             orientation: 'horizontal'
 
-            Label:
+            MDLabel:
                 text: '房間'
                 size_hint_x: 0.05
-            Label:
+            MDLabel:
                 id: rest_room
                 text: ''
                 size_hint_x: 0.05
-            Label:
+            MDLabel:
                 text: '姓名'
                 size_hint_x: 0.05
             TextInput:
                 id: rest_room_name
                 multiline: False
                 size_hint_x:0.2
-            Label:
+            MDLabel:
                 text: '身分證'
                 size_hint_x: 0.05
             TextInput:
                 id: rest_room_id
                 multiline: False
                 size_hint_x:0.2
-            Label:
+            MDLabel:
                 text: '出生日期'
                 size_hint_x: 0.1
 
@@ -339,13 +334,13 @@
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: 0.07
-            Label:
+            MDLabel:
                 text: '電話'
                 size_hint_x: 0.1
             TextInput:
                 id: rest_room_phone_number
                 size_hint_x: 0.4
-            Label:
+            MDLabel:
                 text: '信箱'
                 size_hint_x: 0.1
             TextInput:
@@ -362,30 +357,28 @@
         BoxLayout:
             size_hint_y: 0.2
             orientation: 'horizontal'
-            Label:
+            MDLabel:
                 text: '入住時間'
-            Label:
+            MDLabel:
                 id: rest_room_checkInDate
                 text: ''
 
         BoxLayout:
             size_hint_y: 0.1
             orientation: 'horizontal'
-            Label:
+            MDLabel:
                 text: '退房時間'
-            OneIntInput:
+            Spinner:
                 id: rest_room_hour
                 font_name: 'fonts/ARIALUNI.TTF'
-                input_filter: 'int'
-                min_value : 1
-                max_value : 9
-                hint_text : '請輸入數字在於{}跟{}'.format(self.min_value, self.max_value)
-            Label:
+                values: ['1','2','3','4','5','6','7','8','9']
+                on_text: root.rest_spinner_clicked(rest_room_hour.text)
+            MDLabel:
                 id: rest_room_checkOutDate
                 text: ''
         BoxLayout:
             size_hint_y: 0.2
-            Label:
+            MDLabel:
                 text: '價格'
             TextInput:
                 id: rest_room_price
@@ -405,39 +398,46 @@
                 on_press: root.wipe_input_boxes()
                 on_release: root.parent.current = 'screen_primary'
 
-<DatePicker>:
-    pHint: .4, .4
-
 <AddChangeWindow>
     name: 'screen_add_change'
+    add_change_room: add_change_room
+    add_change_room_checkInDate: add_change_room_checkInDate
+    add_change_room_checkOutDate: add_change_room_checkOutDate
+    add_change_room_dob: add_change_room_dob
+    add_change_room_email: add_change_room_email
+    add_change_room_etc: add_change_room_etc
+    add_change_room_id: add_change_room_id
+    add_change_room_name: add_change_room_name
+    add_change_room_phone_number: add_change_room_phone_number
+    add_change_room_price: add_change_room_price
     BoxLayout:
         orientation: 'vertical'
         BoxLayout:
             size_hint_y: 0.07
             orientation: 'horizontal'
 
-            Label:
+            MDLabel:
                 text: '房間'
                 size_hint_x: 0.05
             TextInput:
                 id: add_change_room
                 text: ''
                 size_hint_x: 0.05
-            Label:
+            MDLabel:
                 text: '姓名'
                 size_hint_x: 0.05
             TextInput:
                 id: add_change_room_name
                 multiline: False
                 size_hint_x:0.2
-            Label:
+            MDLabel:
                 text: '身分證'
                 size_hint_x: 0.05
             TextInput:
                 id: add_change_room_id
                 multiline: False
                 size_hint_x:0.2
-            Label:
+            MDLabel:
                 text: '出生日期'
                 size_hint_x: 0.1
 
@@ -449,13 +449,13 @@
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: 0.07
-            Label:
+            MDLabel:
                 text: '電話'
                 size_hint_x: 0.1
             TextInput:
                 id: add_change_room_phone_number
                 size_hint_x: 0.4
-            Label:
+            MDLabel:
                 text: '信箱'
                 size_hint_x: 0.1
             TextInput:
@@ -472,42 +472,61 @@
         BoxLayout:
             size_hint_y: 0.2
             orientation: 'horizontal'
-            Label:
+            MDLabel:
                 text: '入住時間'
-            Label:
+            MDLabel:
                 id: add_change_room_checkInDate
                 text: ''
 
         BoxLayout:
             size_hint_y: 0.1
             orientation: 'horizontal'
-            Label:
-                text: '退房時間'
+            MDLabel:
+                text: '加幾天'
+            OneIntInput:
+                id: add_change_room_days
+                font_name: 'fonts/ARIALUNI.TTF'
+                input_filter: 'int'
+                min_value : 1
+                max_value : 9
+                on_text: root.add_time()
+                hint_text : '請輸入數字在於{}跟{}'.format(self.min_value, self.max_value)
+        BoxLayout:
+            size_hint_y: 0.1
+            orientation: 'horizontal'
+            MDLabel:
+                text: '加幾小時'
             OneIntInput:
                 id: add_change_room_hour
                 font_name: 'fonts/ARIALUNI.TTF'
                 input_filter: 'int'
                 min_value : 1
                 max_value : 9
+                on_text: root.add_time()
                 hint_text : '請輸入數字在於{}跟{}'.format(self.min_value, self.max_value)
-            Label:
+
+        BoxLayout:
+            size_hint_y: 0.1
+            MDLabel:
+                text: '退房時間'
+            MDLabel:
                 id: add_change_room_checkOutDate
                 text: ''
         BoxLayout:
-            size_hint_y: 0.2
-            Label:
+            size_hint_y: 0.1
+            MDLabel:
                 text: '價格'
             TextInput:
                 id: add_change_room_price
                 multiline: False
 
         BoxLayout:
-            size_hint_y: 0.2
+            size_hint_y: 0.1
             orientation: 'horizontal'
             Button:
                 id: add_change_confirm
                 text: '確認'
-                # on_press: root.update_info()
+                on_press: root.update_info()
                 on_release: root.parent.current = 'screen_primary'
             Button:
                 id: add_change_decline

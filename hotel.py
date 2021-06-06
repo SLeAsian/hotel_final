@@ -1,17 +1,21 @@
-from kivy.app import App
+
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.clock import Clock
-from KivyCalendar import DatePicker
 from kivy.uix.dropdown import DropDown
 from kivy.properties import ObjectProperty
 from kivy.uix.recycleview import RecycleView
-from kivy.uix.label import Label
+# from kivy.uix.label import Label
 from kivy.graphics import Color, Rectangle
 from kivy.uix.button import Button
 from kivy.properties import NumericProperty
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
+
+from kivymd.uix.picker import MDDatePicker
+from kivymd.app import MDApp
+from kivymd.uix.label import MDLabel
+# from kivymd.uix.button import MDButton
 
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.lang import Builder
@@ -23,7 +27,9 @@ import numpy as np
 import json
 import ast
 import math
-from pymongo import MongoClient
+
+from subprocess import Popen
+
 
 def hotel_hour_round(x):
     # if greater than 0.25 hour aka 15 min add one hour
@@ -186,10 +192,10 @@ class PrimaryWindow(Screen):
             else:
                 self.ids.rest_button.disabled = False
                 self.ids.overnight_button.disabled = False
-                self.ids.checkout_button.disabled = False
-                self.ids.additional_hour_button.disabled = False
+                self.ids.checkout_button.disabled = True
+                self.ids.additional_hour_button.disabled = True
                 self.ids.cleaned_button.disabled = False
-                self.ids.finished_cleaning_button.disabled = False
+                self.ids.finished_cleaning_button.disabled = True
         else:
             room_state = False
             self.ids.rest_button.disabled = True
@@ -233,7 +239,7 @@ class PrimaryWindow(Screen):
         'color': '(0.7,0.7,0,1)'}
 
         rooms.loc[temp_i,rooms.columns] = room_to_clean
-        rooms.to_csv('hotel_screen.csv')
+        rooms.to_csv('hotel_screen.csv',encoding='utf-8-sig')
 
     def clean_room(self):
         rooms = pd.read_csv('hotel_screen.csv')[['id', 'present', 'time_reminder', 'overtime', 'name', 'checkin_time',
@@ -256,7 +262,7 @@ class PrimaryWindow(Screen):
         'color': '(0.7,0.7,0,1)'}
 
         rooms.loc[temp_i,rooms.columns] = room_to_clean
-        rooms.to_csv('hotel_screen.csv')
+        rooms.to_csv('hotel_screen.csv',encoding='utf-8-sig')
 
     def finished_cleaning_room(self):
         rooms = pd.read_csv('hotel_screen.csv')[['id', 'present', 'time_reminder', 'overtime', 'name', 'checkin_time',
@@ -276,7 +282,7 @@ class PrimaryWindow(Screen):
         'color': '(0,0,0,1)'}
 
         rooms.loc[temp_i,rooms.columns] = room_to_clean
-        rooms.to_csv('hotel_screen.csv')
+        rooms.to_csv('hotel_screen.csv',encoding='utf-8-sig')
 
     def shiftchange_check(self):
         content = BoxLayout(orientation = 'horizontal')
@@ -294,17 +300,109 @@ class PrimaryWindow(Screen):
     def shiftchange(self, *args):
         self.parent.current = "screen_login"
 
-    # def daily_sheet(self):
-    #     rest_customer_data = pd.DataFrame(list(self.rest_customer_data.find()))
-    #     overnight_customer_data = pd.DataFrame(list(self.overnight_customer_data.find()))
-    #     overnight_customer_data.to_csv('overnight_customer_data.csv')
-    #     rest_customer_data.to_csv('rest_customer_data.csv')
+    def fill_data_to_add_change_screen(self, root_manager):
+        '''rootmanager are for kivy button access screen manager'''
+        #used id_add_change to access id from the add_change screen
+        root_manager.id_add_change.add_change_room.text = self.ids.room_selected.text
 
-class CustomDatePicker(DatePicker):
-    def update_value(self, inst):
-        """ Update textinput value on popup close """
-        date_selected_lst = self.cal.active_date[::-1]
-        date_selected = datetime.date(*date_selected_lst)
+        rooms = pd.read_csv('hotel_screen.csv')[['id', 'present', 'time_reminder', 'overtime', 'name', 'checkin_time',
+        'checkout_time', 'etc', 'color']].fillna('').applymap(str)
+        room = rooms[rooms['id'] == self.ids.room_selected.text].iloc[0]
+
+        overnight_color =  '(0,0,1,1)'
+        rest_color = '(1,0,0,1)'
+
+        if room['color'] == overnight_color:
+            customer_data = pd.read_csv('overnight_customer_data.csv')[['id',
+            'checkInDate', 'checkOutDate', 'dob', 'email', 'etc', 'person_id','name',
+            'phone_number','price','rest_or_overnight',
+            'days']].fillna('').applymap(str).reset_index(drop = True)
+        elif room['color'] == rest_color:
+            customer_data = pd.read_csv('rest_customer_data.csv')[['id',
+            'checkInDate', 'checkOutDate','hour','dob','email','etc',
+            'person_id', 'name', 'phone_number','price',
+            'rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
+
+        #grab most recently entered room
+        index_of_room = customer_data[customer_data['id'] == self.ids.room_selected.text].index[-1]
+
+        #fill in pre-existing information to gui
+        customer_data_spec_room = customer_data.iloc[index_of_room]
+        root_manager.id_add_change.ids.add_change_room_checkInDate.text = customer_data_spec_room['checkInDate']
+        root_manager.id_add_change.ids.add_change_room_checkOutDate.text = customer_data_spec_room['checkOutDate']
+        root_manager.id_add_change.ids.add_change_room_dob.text = customer_data_spec_room['dob']
+        root_manager.id_add_change.ids.add_change_room_email.text = customer_data_spec_room['email']
+        root_manager.id_add_change.ids.add_change_room_etc.text = customer_data_spec_room['etc']
+        root_manager.id_add_change.ids.add_change_room_id.text = customer_data_spec_room['person_id']
+        root_manager.id_add_change.ids.add_change_room_name.text = customer_data_spec_room['name']
+        root_manager.id_add_change.ids.add_change_room_phone_number.text = customer_data_spec_room['phone_number']
+        root_manager.id_add_change.ids.add_change_room_price.text = customer_data_spec_room['price']
+
+    def get_report(self):
+        rest_customer_data = pd.read_csv('rest_customer_data.csv')[['id', 'checkInDate', 'checkOutDate','hour','dob','email','etc',
+        'person_id', 'name', 'phone_number','price','rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
+        overnight_customer_data = pd.read_csv('overnight_customer_data.csv')[['id', 'checkInDate', 'checkOutDate', 'dob', 'email', 'etc',
+        'person_id', 'name', 'phone_number','price','rest_or_overnight','days']].fillna('').applymap(str)
+
+        #drop test first row test data
+        overnight_to_merge = overnight_customer_data.iloc[1:]
+        rest_to_merge = rest_customer_data.iloc[1:]
+
+        report = overnight_to_merge.merge(rest_to_merge,how = 'outer').fillna('')
+        report['checkInDate'] = report['checkInDate'].astype('datetime64')
+        report['checkOutDate'] = report['checkOutDate'].astype('datetime64')
+        report['price'] = report['price'].apply(lambda x: 0 if x == '' else int(float(x)))
+        report = report.sort_values(by = 'checkInDate')
+        now = datetime.datetime.now()
+
+        daily_boo = report['checkInDate'].apply(lambda x: (x.year, x.month, x.day) == (now.year, now.month, now.day))
+        daily_report = report[daily_boo].reset_index(drop = True)
+        daily_report[['id','checkInDate','checkOutDate','price','rest_or_overnight','days','hour']].to_csv('daily_report.csv',encoding='utf-8-sig')
+
+        #open excel
+        p = Popen('daily_report.csv', shell=True)
+
+    def rest_room_selected(self,root_manager):
+        now = datetime.datetime.now()
+        root_manager.id_rest.ids.rest_room.text = self.ids.room_selected.text
+        root_manager.id_rest.ids.rest_room_checkInDate.text = now.strftime("%Y/%m/%d %H:%M")
+
+    def overnight_room_selected(self,root_manager):
+        now = datetime.datetime.now()
+        root_manager.id_overnight.ids.overnight_room.text = self.ids.room_selected.text
+        root_manager.id_overnight.ids.overnight_room_checkInDate.text = now.strftime("%Y/%m/%d %H:%M")
+
+class OvernightWindow(Screen):
+    # date_selected = ObjectProperty(None)
+    def __init__(self, **kwargs):
+        super(OvernightWindow, self).__init__(**kwargs)
+        Clock.schedule_interval(self.check_checkout_n_total, 0.1)
+
+    def check_checkout_n_total(self,dt):
+
+        try:
+            #update total price
+            if (self.ids.overnight_room_days.text != '') & (self.ids.overnight_room_price.text != ''):
+                self.ids.overnight_total.text = str(int(self.ids.overnight_room_days.text) * int(self.ids.overnight_room_price.text))
+            else:
+                self.ids.overnight_total.text = ''
+
+            #disable button if no checkout date
+            if self.ids.overnight_room_checkOutDate.text == '':
+                self.ids.overnight_confirm.disabled = True
+            else:
+                self.ids.overnight_confirm.disabled = False
+        #if chinese char typed stop info from being entered
+        except:
+            self.ids.overnight_confirm.disabled = True
+
+    def show_datepicker(self):
+        picker = MDDatePicker(callback = self.got_date)
+        picker.open()
+
+    def got_date(self, the_date):
+
+        date_selected = datetime.date(the_date.year,the_date.month,the_date.day)
         now = datetime.datetime.now()
 
         if now.date() >= date_selected:
@@ -317,46 +415,16 @@ class CustomDatePicker(DatePicker):
             temp_day = 1
 
         else:
-            temp_date = self.cal.active_date[::-1]
-            temp_date = datetime.date(temp_date[0],temp_date[1],temp_date[2])
-            self.text = temp_date.strftime("%Y/%m/%d") + ' 12:00'
+            self.text = date_selected.strftime("%Y/%m/%d") + ' 12:00'
             if now.time() >= datetime.time(15,0,0):
-                temp_day = (temp_date - now.date()).days
+                temp_day = (date_selected - now.date()).days
             #12 am to 3 pm
             else:
-                temp_day = (temp_date - now.date()).days + 1
-        self.focus = False
+                temp_day = (date_selected - now.date()).days + 1
 
-        App.get_running_app().checkOutDate = self.text
-        App.get_running_app().overnight_days = temp_day
 
-class OvernightWindow(Screen):
-    # date_selected = ObjectProperty(None)
-    def __init__(self, **kwargs):
-        super(OvernightWindow, self).__init__(**kwargs)
-        Clock.schedule_interval(self.checkTime_n_room, 0.1)
-
-    def show_calendar(self):
-        datePicker = CustomDatePicker()
-        datePicker.show_popup(1, .3)
-
-    def checkTime_n_room(self,dt):
-        now = datetime.datetime.now()
-        self.ids.overnight_room_checkInDate.text = now.strftime("%Y/%m/%d %H:%M")
-        self.ids.overnight_room_checkOutDate.text = str(App.get_running_app().checkOutDate)
-        self.ids.overnight_room_days.text = str(App.get_running_app().overnight_days)
-        self.ids.overnight_room.text = self.manager.get_screen('screen_primary').ids.room_selected.text
-        #update total price
-        if (self.ids.overnight_room_days.text != '') & (self.ids.overnight_room_price.text != ''):
-            self.ids.overnight_total.text = str(int(self.ids.overnight_room_days.text) * int(self.ids.overnight_room_price.text))
-        else:
-            self.ids.overnight_total.text = ''
-
-        #disable button if no checkout date
-        if self.ids.overnight_room_checkOutDate.text == '':
-            self.ids.overnight_confirm.disabled = True
-        else:
-            self.ids.overnight_confirm.disabled = False
+        self.ids.overnight_room_checkOutDate.text = self.text
+        self.ids.overnight_room_days.text = str(temp_day)
 
     def store_info(self):
         # reading in screen and customer data
@@ -382,7 +450,7 @@ class OvernightWindow(Screen):
             'phone_number':'0987-123-123',
             'price':'1000',
             'rest_or_overnight':'過夜/休息'}])
-            overnight_customer_data.to_csv('overnight_customer_data.csv')
+            overnight_customer_data.to_csv('overnight_customer_data.csv',encoding='utf-8-sig')
             overnight_customer_data = pd.read_csv('overnight_customer_data.csv')[['id',
             'checkInDate', 'checkOutDate', 'dob', 'email', 'etc', 'person_id','name',
             'phone_number','price','rest_or_overnight','days']].fillna('').applymap(str).reset_index(drop = True)
@@ -403,7 +471,7 @@ class OvernightWindow(Screen):
 
         #update hotel_screen to csv
         rooms.loc[temp_i,rooms.columns] = update_room
-        rooms.to_csv('hotel_screen.csv')
+        rooms.to_csv('hotel_screen.csv',encoding='utf-8-sig')
 
         #input overnight customer to data
         update_customer_data = {}
@@ -420,7 +488,7 @@ class OvernightWindow(Screen):
         update_customer_data['days'] = self.ids.overnight_room_days.text
         update_customer_data['rest_or_overnight'] = '過夜'
         overnight_customer_data = overnight_customer_data.append(update_customer_data, ignore_index = True)
-        overnight_customer_data.to_csv('overnight_customer_data.csv')
+        overnight_customer_data.to_csv('overnight_customer_data.csv',encoding='utf-8-sig')
 
         #wipe input boxes
         self.ids.overnight_room.text = ''
@@ -433,8 +501,8 @@ class OvernightWindow(Screen):
         self.ids.overnight_room_price.text = ''
         self.ids.overnight_room_checkInDate.text = ''
         self.ids.overnight_total.text = ''
-        App.get_running_app().checkOutDate = ''
-        App.get_running_app().overnight_days = ''
+        self.ids.overnight_room_checkOutDate.text = ''
+        self.ids.overnight_room_days.text = ''
 
     def wipe_input_boxes(self):
         #wipe input boxes
@@ -448,25 +516,22 @@ class OvernightWindow(Screen):
         self.ids.overnight_room_price.text = ''
         self.ids.overnight_room_checkInDate.text = ''
         self.ids.overnight_total.text = ''
-        App.get_running_app().checkOutDate = ''
-        App.get_running_app().overnight_days = ''
+        self.ids.overnight_room_checkOutDate.text = ''
+        self.ids.overnight_room_days.text = ''
 
 class RestWindow(Screen):
-    # date_selected = ObjectProperty(None)
+    # rest_room_selected = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(RestWindow, self).__init__(**kwargs)
-        Clock.schedule_interval(self.checkTime_n_room, 0.5)
 
-    def checkTime_n_room(self,dt):
-        now = datetime.datetime.now()
-        self.ids.rest_room_checkInDate.text = now.strftime("%Y/%m/%d %H:%M")
-
+    def rest_spinner_clicked(self,value):
         if self.ids.rest_room_hour.text == '':
             self.ids.rest_confirm.disabled = True
         else:
+            now = self.ids.rest_room_checkInDate.text
+            now = datetime.datetime.strptime(now, '%Y/%m/%d %H:%M')
             hour = int(self.ids.rest_room_hour.text)
             self.ids.rest_room_checkOutDate.text = (now + datetime.timedelta(hours = hour)).strftime("%Y/%m/%d %H:%M")
-            self.ids.rest_room.text = self.manager.get_screen('screen_primary').ids.room_selected.text
             self.ids.rest_confirm.disabled = False
 
     def store_info(self):
@@ -490,7 +555,7 @@ class RestWindow(Screen):
             'phone_number':'0987-123-123',
             'price':'500',
             'rest_or_overnight':'過夜/休息'}])
-            rest_customer_data.to_csv('rest_customer_data.csv')
+            rest_customer_data.to_csv('rest_customer_data.csv',encoding='utf-8-sig')
             rest_customer_data = pd.read_csv('rest_customer_data.csv')[['id', 'checkInDate', 'checkOutDate','hour','dob','email','etc',
             'person_id', 'name', 'phone_number','price','rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
 
@@ -510,7 +575,7 @@ class RestWindow(Screen):
 
         #update hotel_screen to csv
         rooms.loc[temp_i,rooms.columns] = update_room
-        rooms.to_csv('hotel_screen.csv')
+        rooms.to_csv('hotel_screen.csv',encoding='utf-8-sig')
 
 
         #save rest_customer info
@@ -529,7 +594,7 @@ class RestWindow(Screen):
         update_customer_data['rest_or_overnight'] = '休息'
 
         rest_customer_data = rest_customer_data.append(update_customer_data, ignore_index = True)
-        rest_customer_data.to_csv('rest_customer_data.csv')
+        rest_customer_data.to_csv('rest_customer_data.csv',encoding='utf-8-sig')
 
         self.ids.rest_room.text = ''
         self.ids.rest_room_name.text = ''
@@ -573,74 +638,53 @@ class OneIntInput(TextInput):
                     TextInput.insert_text(self, string, from_undo=from_undo)
 
 class AddChangeWindow(Screen):
+    #have ObjectProperty here to allow other screen to access widgets on this
+    #screen
+    add_change_room = ObjectProperty(None)
+    add_change_room_checkInDate = ObjectProperty(None)
+    add_change_room_checkOutDate = ObjectProperty(None)
+    add_change_room_dob = ObjectProperty(None)
+    add_change_room_email = ObjectProperty(None)
+    add_change_room_etc = ObjectProperty(None)
+    add_change_room_id = ObjectProperty(None)
+    add_change_room_name = ObjectProperty(None)
+    add_change_room_phone_number = ObjectProperty(None)
+    add_change_room_price = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(AddChangeWindow, self).__init__(**kwargs)
-        Clock.schedule_interval(self.checkTime_n_room, 0.5)
-        # Clock.schedule_once(self.fill_data_to_gui)
-        self.on_add_change_screen = False
 
-    def checkTime_n_room(self,dt):
-        if self.manager.current == 'screen_add_change':
-            self.on_add_change_screen = True
-        else:
-            self.on_add_change_screen = False
-
-    #     now = datetime.datetime.now()
-    #     self.ids.add_change_room_checkInDate.text = now.strftime("%Y/%m/%d %H:%M")
-    #
-    #     if self.ids.add_change_room_hour.text == '':
-    #         self.ids.add_change_confirm.disabled = True
-    #     else:
-    #         hour = int(self.ids.rest_room_hour.text)
-    #         self.ids.add_change_room_checkOutDate.text = (now + datetime.timedelta(hours = hour)).strftime("%Y/%m/%d %H:%M")
-    #         self.ids.add_change_confirm.disabled = False
-
-    def fill_data_to_gui(self, dt):
-        #grab room selected from primary screen
-        self.ids.add_change_room.text = self.manager.get_screen('screen_primary').ids.room_selected.text
-        print(self.ids.add_change_room.text)
-
+    def add_time(self):
         rooms = pd.read_csv('hotel_screen.csv')[['id', 'present', 'time_reminder', 'overtime', 'name', 'checkin_time',
         'checkout_time', 'etc', 'color']].fillna('').applymap(str)
-        room = rooms[rooms['id'] == self.ids.add_change_room.text].iloc[0]
+        hotel_room_id = self.manager.get_screen('screen_primary').ids.room_selected.text
+        #check if room id exist, because when exist screen room id will be wiped
+        if len(rooms[rooms['id'] == hotel_room_id]) != 0:
+            room = rooms[rooms['id'] == hotel_room_id].iloc[0]
 
-        overnight_color =  '(0,0,1,1)'
-        rest_color = '(1,0,0,1)'
+            #user room['checkout_time'] to ensure the default checkout date doesn't change with different inputs
+            checkOutDate = datetime.datetime.strptime(room['checkout_time'], '%Y/%m/%d %H:%M')
 
-        if room['color'] == overnight_color:
-            customer_data = pd.read_csv('overnight_customer_data.csv')[['id',
-            'checkInDate', 'checkOutDate', 'dob', 'email', 'etc', 'person_id','name',
-            'phone_number','price','rest_or_overnight',
-            'days']].fillna('').applymap(str).reset_index(drop = True)
-        elif room['color'] == rest_color:
-            customer_data = pd.read_csv('rest_customer_data.csv')[['id',
-            'checkInDate', 'checkOutDate','hour','dob','email','etc',
-            'person_id', 'name', 'phone_number','price',
-            'rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
-
-        #grab most recently entered room
-        index_of_room = customer_data[customer_data['id'] == self.ids.add_change_room.text].index[-1]
-
-        #fill in pre-existing information to gui
-        customer_data_spec_room = customer_data.iloc[index_of_room]
-        self.ids.add_change_room_checkInDate.text = customer_data_spec_room['checkInDate']
-        self.ids.add_change_room_checkOutDate.text = customer_data_spec_room['checkOutDate']
-        self.ids.add_change_room_dob.text = customer_data_spec_room['dob']
-        self.ids.add_change_room_email.text = customer_data_spec_room['email']
-        self.ids.add_change_room_etc.text = customer_data_spec_room['etc']
-        self.ids.add_change_room_id.text = customer_data_spec_room['person_id']
-        self.ids.add_change_room_name.text = customer_data_spec_room['name']
-        self.ids.add_change_room_phone_number.text = customer_data_spec_room['phone_number']
-        self.ids.add_change_room_price.text = customer_data_spec_room['price']
+            #have 0 here in case one of the field is ''
+            day = 0
+            hour = 0
+            if (self.ids.add_change_room_hour.text != ''):
+                hour = int(self.ids.add_change_room_hour.text)
+            if (self.ids.add_change_room_days.text != ''):
+                day = int(self.ids.add_change_room_days.text)
+            self.ids.add_change_room_checkOutDate.text = (checkOutDate + datetime.timedelta(days = day, hours = hour)).strftime("%Y/%m/%d %H:%M")
 
     def update_info(self):
         rooms = pd.read_csv('hotel_screen.csv')[['id', 'present', 'time_reminder', 'overtime', 'name', 'checkin_time',
         'checkout_time', 'etc', 'color']].fillna('').applymap(str)
-        room = rooms[rooms['id'] == self.ids.add_change_room.text].iloc[0]
+
+        #grab room id from primary screen
+        hotel_room_id = self.manager.get_screen('screen_primary').ids.room_selected.text
+        room = rooms[rooms['id'] == hotel_room_id].iloc[0]
 
         overnight_color =  '(0,0,1,1)'
         rest_color = '(1,0,0,1)'
 
+        #to see if its rest or overnight
         if room['color'] == overnight_color:
             customer_data = pd.read_csv('overnight_customer_data.csv')[['id',
             'checkInDate', 'checkOutDate', 'dob', 'email', 'etc', 'person_id','name',
@@ -652,87 +696,120 @@ class AddChangeWindow(Screen):
             'person_id', 'name', 'phone_number','price',
             'rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
 
-        #grab most recently entered room
-        index_of_room = customer_data[customer_data['id'] == self.ids.add_change_room.text].index[-1]
 
-        #fill in pre-existing information to gui
-        customer_data_spec_room = customer_data.iloc[index_of_room]
-        # self.ids.add_change_room.text = customer_data_spec_room['id']
-        self.ids.add_change_room_checkInDate.text = customer_data_spec_room['checkInDate']
-        self.ids.add_change_room_checkOutDate.text = customer_data_spec_room['checkOutDate']
-        self.ids.add_change_room_dob.text = customer_data_spec_room['dob']
-        self.ids.add_change_room_email.text = customer_data_spec_room['email']
-        self.ids.add_change_room_etc.text = customer_data_spec_room['etc']
-        self.ids.add_change_room_id.text = customer_data_spec_room['person_id']
-        self.ids.add_change_room_name.text = customer_data_spec_room['name']
-        self.ids.add_change_room_phone_number.text = customer_data_spec_room['phone_number']
-        self.ids.add_change_room_price.text = customer_data_spec_room['price']
+        #SEE IF NEED TO SWITCH ROOM OR NOT
+        if hotel_room_id == self.ids.add_change_room.text:
+            #save customer info
+            update_room = {'id': hotel_room_id,
+            'present': '0',
+            'time_reminder': '',
+            'overtime': '',
+            'name': self.ids.add_change_room_name.text,
+            'checkin_time': self.ids.add_change_room_checkInDate.text,
+            'checkout_time': self.ids.add_change_room_checkOutDate.text,
+            'etc': self.ids.add_change_room_etc.text,
+            'color': room['color']}
 
-        #input changed data
-        update_customer_data = {}
-        update_customer_data['id'] = self.ids.add_change_room.text
-        update_customer_data['checkInDate'] = self.ids.add_change_room_checkInDate.text
-        update_customer_data['checkOutDate'] = self.ids.add_change_room_checkOutDate.text
-        update_customer_data['hour'] = ''
-        update_customer_data['dob'] = self.ids.add_change_room_dob.text
-        update_customer_data['email'] = self.ids.add_change_room_email.text
-        update_customer_data['etc'] = self.ids.add_change_room_etc.text
-        update_customer_data['person_id'] = self.ids.add_change_room_id.text
-        update_customer_data['name'] = self.ids.add_change_room_name.text
-        update_customer_data['phone_number'] = self.ids.add_change_room_phone_number.text
-        update_customer_data['price'] = self.ids.add_change_room_price.text
-        update_customer_data['rest_or_overnight'] = '休息'
+            #grab index of where room is
+            temp_i = rooms[rooms['id'] == hotel_room_id].index[0]
 
-        customer_data.iloc[index_of_room] = update_customer_data
+            #update hotel_screen to csv
+            rooms.loc[temp_i,rooms.columns] = update_room
+            rooms.to_csv('hotel_screen.csv',encoding='utf-8-sig')
 
-        #save customer info
-        update_room = {'id': self.ids.add_change_room.text,
-        'present': '0',
-        'time_reminder': '',
-        'overtime': '',
-        'name': self.ids.rest_room_name.text,
-        'checkin_time': self.ids.rest_room_checkInDate.text,
-        'checkout_time': self.ids.rest_room_checkOutDate.text,
-        'etc': self.ids.rest_room_etc.text,
-        'color': '(1,0,0,1)'}
+            #grab most recently entered room
+            index_of_room = customer_data[customer_data['id'] == hotel_room_id].index[-1]
 
-        #update hotel_screen to csv
-        rooms.loc[temp_i,rooms.columns] = update_room
-        rooms.to_csv('hotel_screen.csv')
+            #input changed data
+            update_customer_data = {}
+            update_customer_data['id'] = hotel_room_id
+            update_customer_data['checkInDate'] = self.ids.add_change_room_checkInDate.text
+            update_customer_data['checkOutDate'] = self.ids.add_change_room_checkOutDate.text
+            update_customer_data['dob'] = self.ids.add_change_room_dob.text
+            update_customer_data['email'] = self.ids.add_change_room_email.text
+            update_customer_data['etc'] = self.ids.add_change_room_etc.text
+            update_customer_data['person_id'] = self.ids.add_change_room_id.text
+            update_customer_data['name'] = self.ids.add_change_room_name.text
+            update_customer_data['phone_number'] = self.ids.add_change_room_phone_number.text
+            update_customer_data['price'] = self.ids.add_change_room_price.text
 
+            #to see if its rest or overnight
+            if room['color'] == overnight_color:
+                update_customer_data['rest_or_overnight'] = '過夜'
+                update_customer_data['days'] = ''
+                customer_data.iloc[index_of_room] = update_customer_data
+                customer_data.to_csv('overnight_customer_data.csv',encoding='utf-8-sig')
+            elif room['color'] == rest_color:
+                update_customer_data['rest_or_overnight'] = '休息'
+                update_customer_data['hour'] = ''
+                customer_data.iloc[index_of_room] = update_customer_data
+                customer_data.to_csv('rest_customer_data.csv',encoding='utf-8-sig')
 
-        #save rest_customer info
-        update_customer_data = {}
-        update_customer_data['id'] = self.ids.rest_room.text
-        update_customer_data['name'] = self.ids.rest_room_name.text
-        update_customer_data['person_id'] = self.ids.rest_room_id.text
-        update_customer_data['dob'] = self.ids.rest_room_dob.text
-        update_customer_data['etc'] = self.ids.rest_room_etc.text
-        update_customer_data['phone_number'] = self.ids.rest_room_phone_number.text
-        update_customer_data['email'] = self.ids.rest_room_email.text
-        update_customer_data['price'] = self.ids.rest_room_price.text
-        update_customer_data['checkInDate'] = self.ids.rest_room_checkInDate.text
-        update_customer_data['checkOutDate'] = self.ids.rest_room_checkOutDate.text
-        update_customer_data['hour'] = self.ids.rest_room_hour.text
-        update_customer_data['rest_or_overnight'] = '休息'
+        else:
+            #change customer room and info
+            update_room = {'id': self.ids.add_change_room.text,
+            'present': '0',
+            'time_reminder': '',
+            'overtime': '',
+            'name': self.ids.add_change_room_name.text,
+            'checkin_time': self.ids.add_change_room_checkInDate.text,
+            'checkout_time': self.ids.add_change_room_checkOutDate.text,
+            'etc': self.ids.add_change_room_etc.text,
+            'color': room['color']}
 
-        rest_customer_data = rest_customer_data.append(update_customer_data, ignore_index = True)
-        rest_customer_data.to_csv('rest_customer_data.csv')
+            #grab index of where room is
+            original_room_i = rooms[rooms['id'] == self.ids.add_change_room.text].index[0]
+            rooms.loc[original_room_i,rooms.columns] = update_room
 
-        self.ids.rest_room.text = ''
-        self.ids.rest_room_name.text = ''
-        self.ids.rest_room_id.text = ''
-        self.ids.rest_room_dob.text = ''
-        self.ids.rest_room_etc.text = ''
-        self.ids.rest_room_phone_number.text = ''
-        self.ids.rest_room_email.text = ''
-        self.ids.rest_room_price.text = ''
-        self.ids.rest_room_checkInDate.text = ''
-        self.ids.rest_room_checkOutDate.text = ''
-        self.ids.rest_room_hour.text = ''
+            #change old room to clean
+            now = datetime.datetime.now()
+            now = datetime.datetime(now.year, now.month, now.day, now.hour, now.minute)
+            t_started_clean = now.strftime("%Y/%m/%d %H:%M")
 
-    def wipe_input_boxes(self):
-        #wipe input boxes
+            #change old room to clean
+            room_to_clean = {'id': hotel_room_id,
+            'present': '0',
+            'time_reminder': '',
+            'overtime': '',
+            'name': '',
+            'checkin_time': t_started_clean,
+            'checkout_time': '',
+            'etc': '',
+            'color': '(0.7,0.7,0,1)'}
+
+            old_room_i = rooms[rooms['id'] == hotel_room_id].index[0]
+            rooms.loc[old_room_i,rooms.columns] = room_to_clean
+            rooms.to_csv('hotel_screen.csv',encoding='utf-8-sig')
+
+            #change index of changed room (grabbing id from current scren)
+            index_of_changed_customer_data = customer_data[customer_data['id'] == hotel_room_id].index[-1]
+
+            #input changed data
+            update_changed_room_customer_data = {}
+            update_changed_room_customer_data['id'] = self.ids.add_change_room.text
+            update_changed_room_customer_data['checkInDate'] = self.ids.add_change_room_checkInDate.text
+            update_changed_room_customer_data['checkOutDate'] = self.ids.add_change_room_checkOutDate.text
+            update_changed_room_customer_data['dob'] = self.ids.add_change_room_dob.text
+            update_changed_room_customer_data['email'] = self.ids.add_change_room_email.text
+            update_changed_room_customer_data['etc'] = self.ids.add_change_room_etc.text
+            update_changed_room_customer_data['person_id'] = self.ids.add_change_room_id.text
+            update_changed_room_customer_data['name'] = self.ids.add_change_room_name.text
+            update_changed_room_customer_data['phone_number'] = self.ids.add_change_room_phone_number.text
+            update_changed_room_customer_data['price'] = self.ids.add_change_room_price.text
+
+            #to see if its rest or overnight
+            if room['color'] == overnight_color:
+                update_changed_room_customer_data['rest_or_overnight'] = '過夜'
+                update_changed_room_customer_data['days'] = ''
+                customer_data.iloc[index_of_changed_customer_data] = update_changed_room_customer_data
+                customer_data.to_csv('overnight_customer_data.csv',encoding='utf-8-sig')
+            elif room['color'] == rest_color:
+                update_changed_room_customer_data['rest_or_overnight'] = '休息'
+                update_changed_room_customer_data['hour'] = ''
+                customer_data.iloc[index_of_changed_customer_data] = update_changed_room_customer_data
+                customer_data.to_csv('rest_customer_data.csv',encoding='utf-8-sig')
+
+        #wipe all input field
         self.ids.add_change_room.text = ''
         self.ids.add_change_room_name.text = ''
         self.ids.add_change_room_id.text = ''
@@ -744,26 +821,42 @@ class AddChangeWindow(Screen):
         self.ids.add_change_room_checkInDate.text = ''
         self.ids.add_change_room_checkOutDate.text = ''
         self.ids.add_change_room_hour.text = ''
+        self.ids.add_change_room_days.text = ''
+
+    def wipe_input_boxes(self):
+        #wipe all input field
+        self.ids.add_change_room.text = ''
+        self.ids.add_change_room_name.text = ''
+        self.ids.add_change_room_id.text = ''
+        self.ids.add_change_room_dob.text = ''
+        self.ids.add_change_room_etc.text = ''
+        self.ids.add_change_room_phone_number.text = ''
+        self.ids.add_change_room_email.text = ''
+        self.ids.add_change_room_price.text = ''
+        self.ids.add_change_room_checkInDate.text = ''
+        self.ids.add_change_room_checkOutDate.text = ''
+        self.ids.add_change_room_hour.text = ''
+        self.ids.add_change_room_days.text = ''
 
 # kv = Builder.load_file('hotel.kv')
 
-class HotelApp(App):
+class HotelApp(MDApp):
     #need this global var here so both calender class and overnightWindow class
     #can access it. This is the only way I have found so far.
     #app.get_running_app, self.maanger both do not work
     checkOutDate = ''
     overnight_days = ''
 
-    # def build(self):
-    #     return kv
-    sm = MainWindow()
     def build(self):
-      HotelApp.sm.add_widget(LoginWindow(name='screen_login'))
-      HotelApp.sm.add_widget(PrimaryWindow(name='screen_primary'))
-      HotelApp.sm.add_widget(OvernightWindow(name='screen_overnight'))
-      HotelApp.sm.add_widget(RestWindow(name='screen_rest'))
-      HotelApp.sm.add_widget(AddChangeWindow(name='screen_add_change'))
-      return HotelApp.sm
+        return MainWindow()
+    # sm = MainWindow()
+    # def build(self):
+    #   HotelApp.sm.add_widget(LoginWindow(name='screen_login'))
+    #   HotelApp.sm.add_widget(PrimaryWindow(name='screen_primary'))
+    #   HotelApp.sm.add_widget(OvernightWindow(name='screen_overnight'))
+    #   HotelApp.sm.add_widget(RestWindow(name='screen_rest'))
+    #   HotelApp.sm.add_widget(AddChangeWindow(name='screen_add_change', id = 'id_add_change'))
+    #   return HotelApp.sm
 
 if __name__ == '__main__':
     HotelApp().run()
