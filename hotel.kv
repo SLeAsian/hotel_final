@@ -238,14 +238,11 @@
         BoxLayout:
             orientation: 'horizontal'
             Button:
-                # on_press: root.show_calendar()
                 on_press: root.show_datepicker()
                 text: '點此選擇退房日期'
             MDLabel:
                 id: overnight_room_checkOutDate
                 text: ''
-                # readonly: True
-                # on_text: root.checkTime_n_room(root.manager)
 
         BoxLayout:
             orientation: 'horizontal'
@@ -253,7 +250,7 @@
                 text: '付款方式'
             Spinner:
                 id: overnight_payment_option
-                values: ['信用卡','現金']
+                values: ['信用卡','現金','禮卷','匯款','其他']
                 # on_text: root.overnight_spinner_clicked(overnight_payment_option.text)
 
         BoxLayout:
@@ -298,7 +295,6 @@
     BoxLayout:
         orientation: 'vertical'
         BoxLayout:
-            size_hint_y: 0.07
             orientation: 'horizontal'
 
             MDLabel:
@@ -333,7 +329,6 @@
                 hint_text: 'xx.xx.xxxx'
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.07
             MDLabel:
                 text: '電話'
                 size_hint_x: 0.1
@@ -348,14 +343,12 @@
                 size_hint_x: 0.4
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.16
             TextInput:
                 id: rest_room_etc
                 hint_text: '備註'
                 size_hint_x: 0.6
 
         BoxLayout:
-            size_hint_y: 0.2
             orientation: 'horizontal'
             MDLabel:
                 text: '入住時間'
@@ -364,7 +357,6 @@
                 text: ''
 
         BoxLayout:
-            size_hint_y: 0.1
             orientation: 'horizontal'
             MDLabel:
                 text: '退房時間'
@@ -377,7 +369,13 @@
                 id: rest_room_checkOutDate
                 text: ''
         BoxLayout:
-            size_hint_y: 0.2
+            orientation: 'horizontal'
+            MDLabel:
+                text: '付款方式'
+            Spinner:
+                id: rest_payment_option
+                values: ['信用卡','現金','禮卷','匯款','其他']
+        BoxLayout:
             MDLabel:
                 text: '價格'
             TextInput:
@@ -385,7 +383,6 @@
                 multiline: False
 
         BoxLayout:
-            size_hint_y: 0.2
             orientation: 'horizontal'
             Button:
                 id: rest_confirm
@@ -413,7 +410,6 @@
     BoxLayout:
         orientation: 'vertical'
         BoxLayout:
-            size_hint_y: 0.07
             orientation: 'horizontal'
 
             MDLabel:
@@ -448,7 +444,6 @@
                 hint_text: 'xx.xx.xxxx'
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.07
             MDLabel:
                 text: '電話'
                 size_hint_x: 0.1
@@ -463,23 +458,26 @@
                 size_hint_x: 0.4
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.16
             TextInput:
                 id: add_change_room_etc
                 hint_text: '備註'
                 size_hint_x: 0.6
 
         BoxLayout:
-            size_hint_y: 0.2
             orientation: 'horizontal'
             MDLabel:
                 text: '入住時間'
             MDLabel:
                 id: add_change_room_checkInDate
                 text: ''
-
         BoxLayout:
-            size_hint_y: 0.1
+            orientation: 'horizontal'
+            MDLabel:
+                text: '付款方式'
+            Spinner:
+                id: add_change_payment_option
+                values: ['信用卡','現金','禮卷','匯款','其他']
+        BoxLayout:
             orientation: 'horizontal'
             MDLabel:
                 text: '加幾天'
@@ -492,7 +490,6 @@
                 on_text: root.add_time()
                 hint_text : '請輸入數字在於{}跟{}'.format(self.min_value, self.max_value)
         BoxLayout:
-            size_hint_y: 0.1
             orientation: 'horizontal'
             MDLabel:
                 text: '加幾小時'
@@ -506,14 +503,12 @@
                 hint_text : '請輸入數字在於{}跟{}'.format(self.min_value, self.max_value)
 
         BoxLayout:
-            size_hint_y: 0.1
             MDLabel:
                 text: '退房時間'
             MDLabel:
                 id: add_change_room_checkOutDate
                 text: ''
         BoxLayout:
-            size_hint_y: 0.1
             MDLabel:
                 text: '價格'
             TextInput:
@@ -521,7 +516,6 @@
                 multiline: False
 
         BoxLayout:
-            size_hint_y: 0.1
             orientation: 'horizontal'
             Button:
                 id: add_change_confirm

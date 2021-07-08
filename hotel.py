@@ -379,7 +379,7 @@ class OvernightWindow(Screen):
         Clock.schedule_interval(self.check_checkout_n_total, 0.1)
 
     def check_checkout_n_total(self,dt):
-
+        # have try and except here for accidental insertion of 注音
         try:
             #update total price
             if (self.ids.overnight_room_days.text != '') & (self.ids.overnight_room_price.text != ''):
@@ -435,7 +435,7 @@ class OvernightWindow(Screen):
         try:
             overnight_customer_data = pd.read_csv('overnight_customer_data.csv')[['id',
             'checkInDate', 'checkOutDate', 'dob', 'email', 'etc', 'person_id','name',
-            'phone_number','price','rest_or_overnight',
+            'phone_number','price','payment_option','rest_or_overnight',
             'days']].fillna('').applymap(str).reset_index(drop = True)
         except:
             overnight_customer_data = pd.DataFrame([{'id':'R000',
@@ -449,6 +449,7 @@ class OvernightWindow(Screen):
             'name':'王王王',
             'phone_number':'0987-123-123',
             'price':'1000',
+            'payment_option': '付款方式',
             'rest_or_overnight':'過夜/休息'}])
             overnight_customer_data.to_csv('overnight_customer_data.csv',encoding='utf-8-sig')
             overnight_customer_data = pd.read_csv('overnight_customer_data.csv')[['id',
@@ -483,6 +484,7 @@ class OvernightWindow(Screen):
         update_customer_data['phone_number'] = self.ids.overnight_room_phone_number.text
         update_customer_data['email'] = self.ids.overnight_room_email.text
         update_customer_data['price'] = self.ids.overnight_room_price.text
+        update_customer_data['payment_option'] = self.ids.overnight_payment_option.text
         update_customer_data['checkInDate'] = self.ids.overnight_room_checkInDate.text
         update_customer_data['checkOutDate'] = self.ids.overnight_room_checkOutDate.text
         update_customer_data['days'] = self.ids.overnight_room_days.text
@@ -499,6 +501,7 @@ class OvernightWindow(Screen):
         self.ids.overnight_room_phone_number.text = ''
         self.ids.overnight_room_email.text = ''
         self.ids.overnight_room_price.text = ''
+        self.ids.overnight_payment_option.text = ''
         self.ids.overnight_room_checkInDate.text = ''
         self.ids.overnight_total.text = ''
         self.ids.overnight_room_checkOutDate.text = ''
@@ -514,6 +517,7 @@ class OvernightWindow(Screen):
         self.ids.overnight_room_phone_number.text = ''
         self.ids.overnight_room_email.text = ''
         self.ids.overnight_room_price.text = ''
+        self.ids.overnight_payment_option.text = ''
         self.ids.overnight_room_checkInDate.text = ''
         self.ids.overnight_total.text = ''
         self.ids.overnight_room_checkOutDate.text = ''
@@ -541,7 +545,7 @@ class RestWindow(Screen):
         # in case rest_customer_data is deleted, create one from csv from scratch
         try:
             rest_customer_data = pd.read_csv('rest_customer_data.csv')[['id', 'checkInDate', 'checkOutDate','hour','dob','email','etc',
-            'person_id', 'name', 'phone_number','price','rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
+            'person_id', 'name', 'phone_number','price','payment_option','rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
         except:
             rest_customer_data = pd.DataFrame([{'id':'R000',
             'checkInDate':'2021/06/01 14:14',
@@ -554,6 +558,7 @@ class RestWindow(Screen):
             'name':'張張張',
             'phone_number':'0987-123-123',
             'price':'500',
+            'payment_option': '付款方式',
             'rest_or_overnight':'過夜/休息'}])
             rest_customer_data.to_csv('rest_customer_data.csv',encoding='utf-8-sig')
             rest_customer_data = pd.read_csv('rest_customer_data.csv')[['id', 'checkInDate', 'checkOutDate','hour','dob','email','etc',
@@ -588,6 +593,7 @@ class RestWindow(Screen):
         update_customer_data['phone_number'] = self.ids.rest_room_phone_number.text
         update_customer_data['email'] = self.ids.rest_room_email.text
         update_customer_data['price'] = self.ids.rest_room_price.text
+        update_customer_data['payment_option'] = self.ids.rest_payment_option.text
         update_customer_data['checkInDate'] = self.ids.rest_room_checkInDate.text
         update_customer_data['checkOutDate'] = self.ids.rest_room_checkOutDate.text
         update_customer_data['hour'] = self.ids.rest_room_hour.text
@@ -604,6 +610,7 @@ class RestWindow(Screen):
         self.ids.rest_room_phone_number.text = ''
         self.ids.rest_room_email.text = ''
         self.ids.rest_room_price.text = ''
+        self.ids.rest_payment_option.text = ''
         self.ids.rest_room_checkInDate.text = ''
         self.ids.rest_room_checkOutDate.text = ''
         self.ids.rest_room_hour.text = ''
@@ -617,6 +624,7 @@ class RestWindow(Screen):
         self.ids.rest_room_etc.text = ''
         self.ids.rest_room_phone_number.text = ''
         self.ids.rest_room_email.text = ''
+        self.ids.rest_room_price.text = ''
         self.ids.rest_room_price.text = ''
         self.ids.rest_room_checkInDate.text = ''
         self.ids.rest_room_checkOutDate.text = ''
@@ -688,12 +696,12 @@ class AddChangeWindow(Screen):
         if room['color'] == overnight_color:
             customer_data = pd.read_csv('overnight_customer_data.csv')[['id',
             'checkInDate', 'checkOutDate', 'dob', 'email', 'etc', 'person_id','name',
-            'phone_number','price','rest_or_overnight',
+            'phone_number','price','payment_option','rest_or_overnight',
             'days']].fillna('').applymap(str).reset_index(drop = True)
         elif room['color'] == rest_color:
             customer_data = pd.read_csv('rest_customer_data.csv')[['id',
             'checkInDate', 'checkOutDate','hour','dob','email','etc',
-            'person_id', 'name', 'phone_number','price',
+            'person_id', 'name', 'phone_number','price','payment_option',
             'rest_or_overnight']].fillna('').applymap(str).reset_index(drop = True)
 
 
@@ -732,6 +740,7 @@ class AddChangeWindow(Screen):
             update_customer_data['name'] = self.ids.add_change_room_name.text
             update_customer_data['phone_number'] = self.ids.add_change_room_phone_number.text
             update_customer_data['price'] = self.ids.add_change_room_price.text
+            update_customer_data['payment_option'] = self.ids.add_change_payment_option.text
 
             #to see if its rest or overnight
             if room['color'] == overnight_color:
@@ -796,6 +805,7 @@ class AddChangeWindow(Screen):
             update_changed_room_customer_data['name'] = self.ids.add_change_room_name.text
             update_changed_room_customer_data['phone_number'] = self.ids.add_change_room_phone_number.text
             update_changed_room_customer_data['price'] = self.ids.add_change_room_price.text
+            update_customer_data['payment_option'] = self.ids.add_change_payment_option.text
 
             #to see if its rest or overnight
             if room['color'] == overnight_color:
@@ -818,6 +828,7 @@ class AddChangeWindow(Screen):
         self.ids.add_change_room_phone_number.text = ''
         self.ids.add_change_room_email.text = ''
         self.ids.add_change_room_price.text = ''
+        self.ids.add_change_payment_option.text = ''
         self.ids.add_change_room_checkInDate.text = ''
         self.ids.add_change_room_checkOutDate.text = ''
         self.ids.add_change_room_hour.text = ''
@@ -833,6 +844,7 @@ class AddChangeWindow(Screen):
         self.ids.add_change_room_phone_number.text = ''
         self.ids.add_change_room_email.text = ''
         self.ids.add_change_room_price.text = ''
+        self.ids.add_change_payment_option.text = ''
         self.ids.add_change_room_checkInDate.text = ''
         self.ids.add_change_room_checkOutDate.text = ''
         self.ids.add_change_room_hour.text = ''
