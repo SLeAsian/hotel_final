@@ -12,7 +12,7 @@ from kivy.properties import NumericProperty
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 
-from kivymd.uix.picker import MDDatePicker
+from kivymd.uix.pickers import MDDatePicker
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 # from kivymd.uix.button import MDButton

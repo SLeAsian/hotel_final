@@ -1,0 +1,5 @@
+kivy==2.1.0
+kivymd==0.104.2
+numpy==1.22.3
+pandas==1.4.2
+pymongo==4.1.1
